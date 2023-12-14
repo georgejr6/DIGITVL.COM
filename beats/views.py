@@ -19,7 +19,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+# from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from taggit.models import Tag
 
 from accounts.permission import IsOwnerOrReadOnly
@@ -91,7 +91,7 @@ class BeatsSearchEngine(ListAPIView):
 
 @permission_classes([IsAuthenticated])
 class SongCreate(views.APIView):
-    authentication_classes = [JSONWebTokenAuthentication, ]
+    # authentication_classes = [JSONWebTokenAuthentication, ]
 
     def post(self, request, format=None):
         error_result = {}

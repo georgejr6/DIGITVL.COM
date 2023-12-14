@@ -1,3 +1,5 @@
+from abc import ABC
+
 from rest_framework import serializers
 
 from xrpwallet.models import XRPWallet

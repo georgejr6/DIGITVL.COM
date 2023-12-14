@@ -1,3 +1,5 @@
+from abc import ABC
+
 from django.contrib.auth.hashers import make_password
 
 from phonenumber_field.serializerfields import PhoneNumberField
@@ -6,6 +8,8 @@ from rest_framework.authtoken.models import Token
 
 
 from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from subscriptions.serializers import UserMembershipSerializer
 from xrpwallet.serializers import UserXrpWalletDetailSerializer
 from .models import User, Profile
@@ -27,6 +31,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 class ChildProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
+
         fields = ['id', 'username', 'username_slug', 'avatar', 'blue_tick_verified', 'followers_count',
                   'following_count', 'track_count', 'get_subscription_badge']
 
@@ -57,33 +62,31 @@ class GetFullUserSerializer(serializers.ModelSerializer):
                   'membership_plan', 'is_staff', 'user_xrp_wallet')
 
 
-# use this in future
-# class CustomPhoneNumberField(PhoneNumberField):
-#     def to_internal_value(self, data):
-#         phone_number = to_python(data)
-#         if phone_number and not phone_number.is_valid():
-#             raise ValidationError("")
-#         return phone_number.as_e164
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def get_user_data(self, user):
+        serializer = GetFullUserSerializer(user)
+        return serializer.data
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Add custom data to the response
+        user = self.user
+
+        data['user'] = self.get_user_data(user)
+
+        return data
 
 
 class UserSerializerWithToken(serializers.ModelSerializer):
-    token = serializers.SerializerMethodField()
     profile = ProfileSerializer(read_only=True)
     membership_plan = UserMembershipSerializer(read_only=True)
     phone_number = PhoneNumberField()
 
-    def get_token(self, obj):
-        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-
-        payload = jwt_payload_handler(obj)
-        token = jwt_encode_handler(payload)
-        return token
-
     class Meta:
         model = User
         fields = (
-            'token', 'id', 'username', 'username_slug', 'first_name', 'last_name', 'phone_number', 'email', 'password',
+            'id', 'username', 'username_slug', 'first_name', 'last_name', 'phone_number', 'email', 'password',
             'profile',
             'membership_plan', 'algorand_public_address')
         extra_kwargs = {'password': {'write_only': True}}

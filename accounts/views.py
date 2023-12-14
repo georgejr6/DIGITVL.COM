@@ -1,28 +1,28 @@
 import redis
 from django.conf import settings
 from django.contrib.auth import logout as django_logout
+from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, views
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
-from rest_framework_jwt.settings import api_settings
-from rest_framework_jwt.views import ObtainJSONWebToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import Profile, User, Contact
 from .permission import IsOwnerOrReadOnly
 from .serializers import (GetFullUserSerializer, UpdateProfileSerializer, UserSerializerWithToken,
                           EmailVerificationSerializer, ResetPasswordRequestSerializer, ResetPasswordSerializer,
-                          Important_Notification)
-from accounts.tasks import send_coin_to_referral_user, send_important_announcement, send_email_verification_token
+                          Important_Notification, CustomTokenObtainPairSerializer)
+from accounts.tasks import send_email_verification_token
 from .utils import Util
 
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 # connect to redis
 redis_cache = redis.StrictRedis(host=settings.REDIS_HOST,
                                 port=settings.REDIS_PORT,
@@ -47,21 +47,34 @@ class UserList(APIView):
     Create a new user. It's called 'UserList' because normally we'd have a get
     method here too, for retrieving a list of all User objects.
     """
+    permission_classes = [permissions.AllowAny]
 
-    permission_classes = (permissions.AllowAny,)
 
-    def post(self, request, format=None):
+    def post(self, request, *args, **kwargs):
+        current_site = get_current_site(None)
+        print('post')
         error_result = {}
 
         serializer = UserSerializerWithToken(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
             user_data = serializer.data
-
+            # refresh = RefreshToken.for_user(user)
+            # access_token = str(refresh.access_token)
             token = Token.objects.get(user_id=user_data['id'])
+            request = HttpRequest()
 
-            absolute_url = 'https://' + 'app.digitvl.com/email-verify/' + str(token)
+            # Get the current site
+            current_site = get_current_site(request)
+
+            # Get the protocol used in the request (HTTP or HTTPS)
+            protocol = 'https' if request.is_secure() else 'http'
+
+            # Generate the absolute URL with the correct protocol
+            absolute_url = f'{protocol}://{current_site.domain}/email-verify/{token}'
+
+
             email_body = 'Hey' + user_data['username'] + ' use the link below to verify your email \n' \
                          + absolute_url
             data = {'email_body': email_body, 'to_email': user_data['email'], 'username': user_data['username'],
@@ -76,7 +89,7 @@ class UserList(APIView):
 
 
 class ProfileUpdateAPIView(UpdateAPIView):
-    authentication_classes = [JSONWebTokenAuthentication, ]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsOwnerOrReadOnly]
     lookup_field = 'user_id'
     serializer_class = UpdateProfileSerializer
@@ -101,7 +114,7 @@ class ProfileUpdateAPIView(UpdateAPIView):
 
 
 class LogoutView(APIView):
-    authentication_classes = [JSONWebTokenAuthentication, ]
+    # authentication_classes = [JSONWebTokenAuthentication, ]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -109,54 +122,67 @@ class LogoutView(APIView):
         return Response(status=204)
 
 
-class LoginView(ObtainJSONWebToken):
+# class LoginView(ObtainJSONWebToken):
+class LoginView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
-        response = super(LoginView, self).post(request, *args, **kwargs)
-        current_coins = 0
-        res = response.data
-        req = request.data
-        email = req.get('email')
-        password = req.get('password')
         try:
-            user = User.objects.get(email=email)
-            try:
-                current_coins = redis_cache.hget('users:{}:coins'.format(user.id), user.id)
-            except redis.ConnectionError:
-                pass
-            if not user.is_email_verified:
-                return Response({'status': False,
-                                 'message': 'please verify your account first, We have send the '
-                                            'verification email to your provided email. If the email is not in primary '
-                                            'check your promotion or spam folder. ''Thanks, Keep Supporting.',
-                                 'result': {}},
-                                status=status.HTTP_200_OK)
-            if not user.check_password(password):
-                return Response({'status': False,
-                                 'message': 'Incorrect password',
-                                 'result': {}},
-                                status=status.HTTP_200_OK)
-        except User.DoesNotExist:
-            return Response({'status': False,
-                             'message': 'user not found',
-                             'result': {}},
-                            status=status.HTTP_200_OK)
+            response = super().post(request, *args, **kwargs)
+        except AuthenticationFailed as e:
+            # Handle the authentication failed exception
+            error_message = 'Invalid email or password.'
+            return self.custom_error_response(error_message)
 
-        token = res.get('token')
+        return self.process_response(response)
 
-        if current_coins:
-            res['user']['coins'] = int(current_coins)
-        else:
-            res['user']['coins'] = 0
-        if token:
-            user = jwt_decode_handler(token)
+    def process_response(self, response):
+        res = response.data
 
-        content = {'user': res}
+        if response.status_code == 200 and 'access' in res:
+            email = self.request.data.get('email')
+            user = User.objects.filter(email=email).first()
 
-        return Response({'status': True,
-                         'message': 'Successfully logged in',
-                         'result': content},
-                        status=status.HTTP_200_OK)
+            if user:
+                if not user.is_email_verified:
+                    error_message = 'Please verify your email address. we sent you email verification on your email account.'
+                    token = Token.objects.get(user_id=user.id)
+                    request = HttpRequest()
+
+                    # Get the current site
+                    current_site = get_current_site(request)
+
+                    # Get the protocol used in the request (HTTP or HTTPS)
+                    protocol = 'https' if request.is_secure() else 'http'
+
+                    # Generate the absolute URL with the correct protocol
+                    absolute_url = f'{protocol}://{current_site.domain}/email-verify/{token}'
+
+                    email_body = 'Hey,' + user.username + ' use the link below to verify your email \n' \
+                                 + absolute_url
+                    data = {'email_body': email_body, 'to_email': user.email, 'username': user.username,
+                            'email_subject': 'Verify your email'}
+
+                    send_email_verification_token.delay(data)
+                    return self.custom_error_response(error_message)
+                elif not user.check_password(self.request.data.get('password')):
+                    error_message = 'Invalid email or password.'
+                    return self.custom_error_response(error_message)
+
+                serializer = GetFullUserSerializer(user,  context={'request': self.request})
+                res['user'] = serializer.data
+            else:
+                error_message = 'Invalid email or password.'
+                return self.custom_error_response(error_message)
+
+        return Response(res)
+
+    def custom_error_response(self, error_message):
+        return Response({
+            'status': False,
+            'message': error_message,
+            'result': {}
+        }, status=status.HTTP_200_OK)
 
 
 class VerifyEmail(views.APIView):
@@ -166,14 +192,15 @@ class VerifyEmail(views.APIView):
     def post(self, request, *args, **kwargs):
         # try:
         result = request.data
-        token = request.POST.get('token')
+        token = str(request.POST.get('token'))
+        print(token)
 
         # payload = jwt_decode_handler(token)
         user = User.objects.get(email_verification_token=token)
         # serializer = UserSerializerWithToken(user, context={'request': request})
         if not user.is_email_verified:
             user.is_email_verified = True
-            to_follow = User.objects.get(id=12)
+            to_follow = User.objects.get(id=2)
 
             obj_id = Contact.objects.get_or_create(
                 user_from=user,
@@ -183,7 +210,7 @@ class VerifyEmail(views.APIView):
                     'is_email_verified': user.is_email_verified}
 
             # send_welcome_email.delay(data)
-            send_coin_to_referral_user(data)
+            # send_coin_to_referral_user(data)
             user.save()
 
             return Response({'status': True, 'email': 'Successfully activated'}, status=status.HTTP_200_OK)
@@ -341,7 +368,7 @@ class SendAnnouncementEmail(views.APIView):
             email_body = message['body']
             data = {'email_body': email_body, 'username': user_data.username, 'to_email': user_data.email,
                     'email_subject': 'Important Announcement'}
-            send_important_announcement(data)
+            # send_important_announcement.delay(data)
 
         resp_obj = dict(
             status=True, )

@@ -13,7 +13,6 @@ from xrpl.wallet import generate_faucet_wallet
 
 from accounts.models import User
 from xrpwallet.models import XRPWallet
-# fetching address
 import xrpl
 from xrpl.wallet import Wallet
 
@@ -21,13 +20,10 @@ from xrpwallet.serializers import SendXrpSerializer
 
 
 class CreateUserXrpWalletView(views.APIView):
-    # serializer_class = EmailVerificationSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        token = request.POST.get('token')
 
-        # payload = jwt_decode_handler(token)
         user = get_object_or_404(User, id=request.user.id)
         if user is not None:
             JSON_RPC_URL = "https://s.altnet.rippletest.net:51234/"
@@ -70,9 +66,7 @@ class SendXrpToUsersView(views.APIView):
     def post(self, request, *args, **kwargs):
         data = {}
         public_address = request.POST.get('public_address')
-        print(public_address)
         xrp_amount = request.POST.get('xrp_amount')
-        print(xrp_amount)
         xrp_amount = Decimal(xrp_amount)
 
         test_wallet = Wallet(seed="snR5QCYdRf5rvHPmaXaEXtXtAPkR2", sequence=30862095)
@@ -142,11 +136,6 @@ class AddXrpToBalanceView(views.APIView):
         try:
             xrp_token_amount_earn = request.POST.get('xrp_token_amount_earn')
 
-            # public_address = request.POST.get('pubic_address')
-            # print(public_address)
-            # xrp_amount = request.POST.get('xrp_amount')
-            # print(xrp_amount)
-            # xrp_amount = Decimal(xrp_amount)
             user_xrp_wallet = XRPWallet.objects.get(user=request.user)
             user_xrp_wallet.xrp_token_earn = F('xrp_token_earn') + xrp_token_amount_earn
             user_xrp_wallet.save()

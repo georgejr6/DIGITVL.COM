@@ -1,102 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <title>Important Announcement | Digitvl</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="x-apple-disable-message-reformatting">
+    <title>Important Announcement</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+        }
 
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #555;
+            text-align: center;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+    </style>
 </head>
-
-<body style="background-color: #FFFFFF; text-align: center;margin: 0;padding: 0; overflow-x:hidden">
-<div style="margin: 0 auto; text-align: center;">
-        <a href="https://www.digitvl.com">
-         <img style="margin-top:32px;height:90px; width: 90px;margin-bottom: 40px;display: block;margin-left: auto;margin-right: auto;padding: 0px;"
-             src="https://novamdigital.com/static/images/digitvl-logo.png">
-
-    <div>
-        <div style="text-align: center">
-            <img style="display: block;margin-right: auto;margin-left: auto; width: 507px; height: 210px"
-                 src="https://tailorie-common-static.s3.us-east-2.amazonaws.com/images/emails/welcome-email/tailorie-hero%402x.png">
-        </div>
-
-        <h1
-                style="text-align: center;font: Bold 25px/28px Georgia; letter-spacing: 0;color: #707070;opacity: 1;margin-top: 31px;">
-            Hey  {{ username }}, {{ body }} </h1>
-        <h1
-                style="margin-top:17px; text-align: center;font: Bold 18px/21px Arial;letter-spacing: 0;color: #1E2A40;">
-            We’re so excited that you are here!</h1>
-        <p
-                style="width: 398px;display: block;margin-right: auto;margin-left: auto;margin-bottom:13px;display: block;margin-right: auto;margin-left: auto; margin-bottom:0px;text-align:center; margin-top:22px; font: normal 12px/20px Arial;letter-spacing: 0;color: #1E2A40;opacity: 1;">
-            Digitvl is on a mission to help Artists and their fans to discover one another — providing meaningful
-            Platform with all social Aspects.
-            You’ll find great beats at the heart of the Digitvl platform and we are thrilled to share
-            yours. </p>
-    </div>
-
-        <h2
-                style="margin-top: 13px;text-align: center;font: Bold 18px/25px TT Commons;letter-spacing: 0;color: #C78891;opacity: 1;">
-            Music are incredibly popular and effective.</h2>
-        <p
-                style="width: 398px;display: block;margin-right: auto;margin-left: auto;text-align: center;margin-top: 17px; font: normal 12px/20px Arial;letter-spacing: 0;color: #1E2A40; opacity: 1;">
-            Fans truly want to know you, so we encourage you to upload your music that represent you as a brand itself.
-            No need to hire a professional! A laptop and your music is all you need to get started.</p>
-    </div>
-    <div style="margin-top: 50px">
-        <img style="display: block;margin: 0 auto; width: 135px;height: 134px;margin-top: 50px;"
-             src="https://tailorie-common-static.s3.us-east-2.amazonaws.com/images/emails/welcome-email/PLANTS%402x.png">
-        <h1
-                style="margin-top:36px;margin-bottom:13px;text-align: center;font: Bold 20px/22px Georgia;letter-spacing: 0;color: #1E2A40;opacity: 1;">
-            What’s Next?</h1>
-        <p
-                style="width: 398px;display: block;margin-right: auto;margin-left: auto;text-align:center; margin-top:13px; font: normal 12px/20px Arial;letter-spacing: 0;color: #1E2A40;opacity: 1;">
-              The Digitvl app is set to launch soon!
-              Crypto Aspect with smart contracts coming
-              Many Excellent Feature that will help our Artist.
+<body>
+    <div class="container">
+        <h1>Hello, {{ username }}</h1>
+        <p>{{ message | safe }} </p>
+        <br>
+        <p>
+            Please visit the <a href="https://digitvl.app" class="btn btn-dark btn-md" >Site Link </a>.
         </p>
-
-        <img style="display: block;margin:0 auto; width: 137px;height: 138px;margin-top: 39px;"
-             src="https://tailorie-common-static.s3.us-east-2.amazonaws.com/images/emails/welcome-email/PeopleHello%402x.png">
-        <h1
-                style="margin-top:36px;text-align: center;font: Bold 20px/22px Georgia;letter-spacing: 0;color: #1E2A40;opacity: 1;">
-            Our team is here to help!</h1>
-        <p
-                style="margin-top:13px;width: 398px;display: block;margin-right: auto;margin-left: auto;margin-bottom:0px;text-align:center; margin-top:13px; font: normal 12px/20px Arial;letter-spacing: 0;color: #1E2A40;opacity: 1;">
-            We know new things can drum up a few questions so email us at noreply.digitvl@gmail.com if anything comes up!
-        </p>
-        <h1
-                style="margin-top:57px;text-align: center;font: Bold 20px/22px Georgia;letter-spacing: 0;color: #1E2A40;opacity: 1;">
-            Enjoy Superb Beats!</h1>
-        <p
-                style="margin-bottom:13px;text-align: center;font: Italic 12px/20px Arial;letter-spacing: 0;color: #1E2A40;opacity: 1;">
-            – The
-            Digitvl Team</p>
-
-        <div style="width: 100%;text-align: center;font-size: 0;margin-top: 16px;">
-            <div style="display: inline-block;margin: 0 auto;font-size: 0;">
-                <a href="https://www.facebook.com/digitvlhub">
-                    <img style="width: 18px; display: inline-block;margin: 0 2px;font-size: auto;"
-                         src="https://tailorie-common-static.s3.us-east-2.amazonaws.com/images/emails/welcome-email/facebook.png"></a>
-                <a href="https://www.instagram.com/digitvl_/">
-                    <img style="width: 18px;  display: inline-block;margin: 0 2px;font-size: auto;"
-                         src="https://tailorie-common-static.s3.us-east-2.amazonaws.com/images/emails/welcome-email/instagram.png"></a>
-                <a href="https://twitter.com/DIGITVL_">
-                    <img style="width: 18px;  display: inline-block;margin: 0 2px;font-size: auto;"
-                         src="https://tailorie-common-static.s3.us-east-2.amazonaws.com/images/emails/welcome-email/twitter.png"></a>
-            </div>
-        </div>
-        <h6
-                style="text-align: center;font: Normal 8px/24px Arial;letter-spacing: 0;color: #979EA6;opacity: 1;margin-bottom: 0">
-            @2020 Digitvl. All right reserved.</h6>
-        <!--    <h6-->
-        <!--      style="text-align: center;font: Normal 8px/24px Arial;letter-spacing: 0;color: #979EA6;opacity: 1;margin-bottom: -25px">-->
-        <!--      Unsubscribe | Manage preferences</h6>-->
-        <h6
-                style="text-align: center;font: Normal 8px/24px Arial;letter-spacing: 0;color: #979EA6;opacity: 1;margin-top: 0; margin-bottom: 30px">
-              Brockport, New York, United States</h6>
+        <p>If you have any questions, contact support at contact@digitvl.com</p>
     </div>
-</div>
 </body>
-
 </html>

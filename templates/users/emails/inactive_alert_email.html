@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inactive Account Alert</title>
+    <style>
+        /* Add your CSS styles here to make the email look modern and stylish */
+        /* For example: */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #555;
+            text-align: center;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hello, {{ username }}!</h1>
+        <p>Your account on {{ domain }} has been inactive for some time. Please log in soon to keep your account active.</p>
+        <p>
+            <a href="https://{{ domain }}" class="btn">Log In Now</a>
+        </p>
+        <p>If you have any questions, contact support at support@digitvl.com</p>
+    </div>
+</body>
+</html>

@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'import_export',
     'django_celery_beat',
     "djstripe",
+    'rest_framework_simplejwt',
 ]
 
 SITE_ID = 1
@@ -149,7 +150,8 @@ REST_FRAMEWORK = {
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
@@ -159,11 +161,20 @@ REST_FRAMEWORK = {
 
 }
 # jwt
-JWT_AUTH = {
-    'JWT_RESPONSE_PAYLOAD_HANDLER': 'marketplace.utils.my_jwt_response_handler',
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=3),
-    'JWT_ALLOW_REFRESH': True,
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
+# JWT_AUTH = {
+#     'JWT_RESPONSE_PAYLOAD_HANDLER': 'marketplace.utils.my_jwt_response_handler',
+#     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=3),
+#     'JWT_ALLOW_REFRESH': True,
+#     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
+# }
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('jwt',),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=5),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=6),
+
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
+
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -181,6 +192,7 @@ DATABASES = {
         'USER': 'dbadmin',
         'PASSWORD': 'abc123!',
         'HOST': 'localhost',
+        # 'PORT': '25060',
 
     }
 }
@@ -230,14 +242,18 @@ REDIS_PORT = 6379
 REDIS_DB = 0
 
 PHONENUMBER_DEFAULT_REGION = "US"
-
-EMAIL_USE_TLS = 1
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_PASSWORD =  os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL =  os.getenv('DEFAULT_FROM_EMAIL')
 EMAIL_PORT = 587
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-# for cache time line
+
+DOMAIN_URL = os.getenv('DOMAIN_URL')
+
+# for cache timeline
 CACHE_TTL = 60 * 5
 CACHES = {
     "default": {
@@ -283,3 +299,6 @@ try:
     from .local_settings import *
 except ImportError:
     pass
+
+
+# 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

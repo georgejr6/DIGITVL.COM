@@ -263,3 +263,11 @@ user_model.add_to_class('following',
                                                through=Contact,
                                                related_name='followers',
                                                symmetrical=False))
+
+class SendImportantAnnouncement(models.Model):
+    message  = models.TextField(help_text='Message Should Be Concise.')
+    created_at = models.DateTimeField(auto_now_add=True,
+                                  db_index=True)
+
+    def __str__(self):
+        return self.message[:12]
