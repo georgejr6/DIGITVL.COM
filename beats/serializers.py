@@ -3,8 +3,8 @@ import redis
 import six
 from django.conf import settings
 from rest_framework import serializers
-from taggit_serializer.serializers import (TagListSerializerField,
-                                           TaggitSerializer)
+from taggit.serializers import (TagListSerializerField,
+                                TaggitSerializer)
 
 from .models import Songs, PlayList, Comment
 from .validators import (
