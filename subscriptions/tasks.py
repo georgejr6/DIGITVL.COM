@@ -53,7 +53,7 @@ def register_user_on_stripe():
 #
 # @shared_task
 # def single_register_user_on_stripe(email):
-#     stripe.api_key = djstripe.settings.STRIPE_SECRET_KEY
+#     stripe.api_key = djstripe.settings.STRIPE_TEST_SECRET_KEY
 #     user = User.objects.get(email=email)
 #
 #     # create stripe customer

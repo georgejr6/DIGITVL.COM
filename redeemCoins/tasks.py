@@ -1,4 +1,5 @@
 from celery import shared_task, Celery
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 
@@ -11,7 +12,7 @@ app = Celery('marketplace', broker='redis://localhost:6379/0')
 @shared_task
 def send_email_after_buying_coins(data):
     email_template_html = 'users/emails/send_email_after_buying_coins.html'
-    sender = '"Digitvl" <noreply.digitvlhub@gmail.com>'
+    sender = settings.DEFAULT_FROM_EMAIL
     headers = {'Reply-To': 'noreply.digitvlhub@gmail.com'}
     mail_subject = "Successfully bought the coins"
     html_message = get_template(email_template_html)

@@ -84,6 +84,7 @@ class SongFilter(filters.BaseFilterBackend):
 class BeatsSearchEngine(ListAPIView):
     pagination_class = StandardResultsSetPagination
     queryset = Songs.objects.all()
+
     serializer_class = SongSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['song_title', 'description', 'tags__name', 'genre', 'user__username']

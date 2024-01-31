@@ -140,7 +140,7 @@ class UserPasswordReset(BaseTimestampModel):
     def send_reset_password_email(self):
         password_reset_email_template_html = 'users/emails/password_reset/request.html'
 
-        sender = '"Digitvl" <noreply.digitvlhub@gmail.com>'
+        sender = settings.DEFAULT_FROM_EMAIL
         send_to = [self.user.email]
         headers = {'Reply-To': 'do-not-reply@digitvl.com'}
 

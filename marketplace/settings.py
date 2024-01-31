@@ -288,8 +288,7 @@ CELERY_BEAT_SCHEDULE = {
 
 # Stripe setting
 stripe.api_version = '2020-08-27'
-STRIPE_TEST_PUBLIC_KEY = 'pk_test_utELKNNX5QjQt9BTmkHlD71N00RZapjJeQ'
-STRIPE_TEST_SECRET_KEY = 'sk_test_4CgRjsXz5H9ntyJSCZ7bCC2400JmmfIpy0'
+STRIPE_TEST_SECRET_KEY =  os.environ.get('STRIPE_TEST_SECRET_KEY')
 STRIPE_LIVE_MODE = False  # Change to True in production
 DJSTRIPE_WEBHOOK_SECRET = "whsec_xxx"
 DJSTRIPE_USE_NATIVE_JSONFIELD = True

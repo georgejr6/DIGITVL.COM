@@ -57,7 +57,10 @@ class UserMembership(models.Model):
 
 def post_save_user_membership_create(sender, instance, created, *args, **kwargs):
     try:
-        stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+        if settings.DEBUG:
+            stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+        else:
+            stripe.api_key = settings.STRIPE_LIVE_SECRET_KEY
         with transaction.atomic():
             user_membership, created = UserMembership.objects.get_or_create(user=instance)
             if created:

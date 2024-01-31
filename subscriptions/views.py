@@ -61,7 +61,10 @@ def get_user_subscription(request):
 # view for creating subscriptions of the user
 
 class CreateSubscriptionApiView(views.APIView):
-    stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+    if settings.DEBUG:
+        stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+    else:
+        stripe.api_key = settings.STRIPE_LIVE_SECRET_KEY
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):

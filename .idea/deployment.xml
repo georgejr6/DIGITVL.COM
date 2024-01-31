@@ -2,10 +2,10 @@
 <project version="4">
   <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="djangoadmin@157.230.177.2:22 key (2)">
+      <paths name="develop server">
         <serverdata>
           <mappings>
-            <mapping deploy="/pyapps/music-beats-novam" local="$PROJECT_DIR$" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

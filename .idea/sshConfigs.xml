@@ -3,6 +3,7 @@
   <component name="SshConfigs">
     <configs>
       <sshConfig authType="PASSWORD" host="157.230.177.2" id="b1af0803-1a13-4500-bd25-b85b919a9534" port="22" nameFormat="DESCRIPTIVE" username="djangoadmin" useOpenSSHConfig="true" />
+      <sshConfig authType="PASSWORD" host="143.244.161.35" id="9f3295f1-0d02-4c36-a506-33cbf6d6345e" port="22" nameFormat="DESCRIPTIVE" username="root" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>

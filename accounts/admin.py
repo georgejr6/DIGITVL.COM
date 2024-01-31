@@ -41,4 +41,4 @@ class SendImportantAnnouncementAdmin(admin.ModelAdmin):
         send_custom_message_to_users.delay()  # Trigger the task asynchronously
         # self.message_user(request, "Custom message sent successfully.")  # Display success message
 
-admin.site.register(SendImportantAnnouncement, SendImportantAnnouncementAdmin)
+# admin.site.register(SendImportantAnnouncement, SendImportantAnnouncementAdmin)

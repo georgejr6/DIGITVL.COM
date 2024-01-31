@@ -167,7 +167,7 @@ def send_custom_message_to_users():
             template = 'users/emails/important_notification.html'
             email_content = render_to_string(template, context)
 
-            from_email = 'contact@digitvl.com'
+            from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [user.email]
             send_mail(subject, 'Important Announcement', from_email, recipient_list, html_message=email_content)
 
@@ -207,8 +207,34 @@ def send_inactive_users_alert():
 
             # Render the email content using the template and context
             email_content = render_to_string(template, context)
-            from_email = 'contact@digitvl.com'  # Set your sender email address
+            from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [user.email]
 
             # Send the email
             send_mail(subject, 'please get login soon.', from_email, recipient_list, html_message=email_content)
+
+@shared_task
+def send_inactive_user_alert_demo():
+    two_weeks_ago = timezone.now() - timedelta(weeks=2)
+    current_site = get_current_site(None)  # Get the current site
+
+    user = User.objects.get(email='junaidiqbal0323@gmail.com')
+
+
+    if user.email:  # Ensure user has an email address
+        subject = 'Inactive Account Alert'
+        template = 'users/emails/inactive_alert_email.html'
+
+        # Create a context dictionary to pass variables to the template
+        context = {
+            'username': user.username,
+            'domain': current_site.domain,
+        }
+
+        # Render the email content using the template and context
+        email_content = render_to_string(template, context)
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [user.email]
+
+        # Send the email
+        send_mail(subject, 'please get login soon.', from_email, recipient_list, html_message=email_content)

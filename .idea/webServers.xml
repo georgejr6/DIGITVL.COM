@@ -9,6 +9,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="b96b7d88-5a5f-40fb-9ce1-4cf3693ae393" name="develop server" url="http://143.244.161.35">
+        <fileTransfer rootFolder="/home/pyapps/music-beats-novam" accessType="SFTP" host="143.244.161.35" port="22" sshConfigId="9f3295f1-0d02-4c36-a506-33cbf6d6345e" sshConfig="root@143.244.161.35:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

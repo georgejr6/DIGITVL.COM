@@ -145,13 +145,12 @@ class PlayList(models.Model):
         if not self.slug:
             slug_str = f'{self.name}'
             self.slug = get_unique_slug(self, slug_str, PlayList.objects)
-            # if self.photo_main:
 
         super().save(*args, **kwargs)
 
     def playlist_cover_photo(self, request):
         try:
-            playlist_cover = self.first().beats.first()
+            playlist_cover = self.beats.first()
             playlist_cover = request.build_absolute_uri(playlist_cover.photo_main.url)
             return playlist_cover
         except Exception:

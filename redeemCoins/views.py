@@ -48,7 +48,7 @@ class RedeemCoinsForFeaturedSong(views.APIView):
             song_object = get_object_or_404(self.queryset, id=track_id, user=request.user.id)
 
             current_coins = redis_cache.hget('users:{}:coins'.format(request.user.id), request.user.id)
-            # if user coins is 100, he can featured his track on featured tab view
+            # if user coins is 100, he can feature his track on featured tab view
             if int(current_coins) >= coins:
                 create_action(request.user, 'featured songs', song_object, 4)
                 redis_cache.hincrby('users:{}:coins'.format(request.user.id), request.user.id, -coins)
@@ -97,7 +97,10 @@ class RedeemCoinsForFeaturedPlaylist(views.APIView):
 
 
 class CreatePurchaseCoinsApiView(views.APIView):
-    stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+    if settings.DEBUG:
+        stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+    else:
+        stripe.api_key = settings.STRIPE_LIVE_SECRET_KEY
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
