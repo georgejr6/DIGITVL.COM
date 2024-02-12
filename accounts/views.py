@@ -193,8 +193,6 @@ class VerifyEmail(views.APIView):
         # try:
         result = request.data
         token = str(request.POST.get('token'))
-        print(token)
-
         # payload = jwt_decode_handler(token)
         user = User.objects.get(email_verification_token=token)
         # serializer = UserSerializerWithToken(user, context={'request': request})

@@ -15,6 +15,9 @@ from beats.serializers import ChildSongSerializer, UserPlayListSerializer
 from beats.views import StandardResultsSetPagination
 from notifications.signals import notify
 
+from userdata.models import ListenedSong, SearchedSong
+from userdata.serializers import RecentlyListenedSongSerializer, SearchedSongSerializer
+
 
 class UserProfileDetail(views.APIView):
     serializer_class = ProfileSerializer
@@ -321,3 +324,68 @@ class FollowedStatusView(views.APIView):
             return views.Response({"status": False, "message": "no user found"}, status=status.HTTP_200_OK)
 
         return views.Response({"status": True, "message": "Success", "followed": followed})
+
+class RecentlyPlayedSongsAPIView(views.APIView):
+    pagination_class = StandardResultsSetPagination
+    serializer_class = RecentlyListenedSongSerializer
+    model = ListenedSong
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        queryset = self.model.objects.recent_for_user(user)
+        page = self.pagination_class()
+        resp_obj = page.generate_response(queryset, SearchedSongSerializer, request)
+        return resp_obj
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        song_slug = request.data.get('song_slug')
+        try:
+            song = Songs.objects.get(slug=song_slug)
+
+            # Check if the recent song already exists for the user
+            if self.model.objects.filter(user=user, song=song).exists():
+                return self.error_response("This song is already in your recently listen history.")
+
+            self.model.objects.get_or_create(user=user, song=song)
+            return self.success_response("song added in recently playing history")
+        except Songs.DoesNotExist:
+            return self.error_response("Song not found.")
+    def success_response(self, message):
+        return Response({'status': 'True', 'message': message}, status=status.HTTP_200_OK)
+
+    def error_response(self, message):
+        return Response({'status': 'False', 'message': message}, status=status.HTTP_200_OK)
+
+
+
+class RecentlySearchedSongsAPIView(views.APIView):
+    pagination_class = StandardResultsSetPagination
+    serializer_class = SearchedSongSerializer
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        queryset = SearchedSong.objects.recent_for_user(user)
+        page = self.pagination_class()
+        resp_obj = page.generate_response(queryset, SearchedSongSerializer, request)
+        return resp_obj
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        song_slug = request.data.get('song_slug')
+        try:
+            song = Songs.objects.get(slug=song_slug)
+
+            # Check if the searched song already exists for the user
+            if SearchedSong.objects.filter(user=user, song=song).exists():
+                return self.error_response("This song is already in your search history.")
+
+            searched_song = SearchedSong.objects.create(user=user, song=song)
+            return self.success_response("Searched song added in history.")
+        except Songs.DoesNotExist:
+            return self.error_response("Song not found.")
+    def success_response(self, message):
+        return Response({'status': 'True', 'message': message}, status=status.HTTP_200_OK)
+
+    def error_response(self, message):
+        return Response({'status': 'False', 'message': message}, status=status.HTTP_200_OK)
