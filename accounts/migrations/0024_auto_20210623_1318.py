@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-
+# 'djstripe', '0012_2_8')
 
 class Migration(migrations.Migration):
 
