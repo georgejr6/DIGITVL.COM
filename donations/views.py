@@ -63,6 +63,7 @@ def save_stripe_info(request):
 
 
 class DonationRequestView(views.APIView):
+    schema = None
     permission_classes = (permissions.AllowAny,)
     serializer_class = DonationSerializer
 

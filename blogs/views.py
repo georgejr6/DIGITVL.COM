@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import views, status
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -16,6 +17,7 @@ from rest_framework.permissions import IsAdminUser
 class BlogCreateApiView(views.APIView):
     permission_classes = [IsAdminUser]
 
+    @swagger_auto_schema(auto_schema=None)
     def post(self, request, *args, **kwargs):
         error_result = {}
         serializer = BlogSerializer(data=request.data, context={'request': request})
@@ -36,6 +38,7 @@ class BlogsDetailApiView(views.APIView):
     permission_classes = [AllowAny]
     serializer_class = BlogSerializer
 
+    @swagger_auto_schema(auto_schema=None)
     def get(self, request, slug, *args, **kwargs):
         blog_detail = get_object_or_404(Blogs, slug=slug)
         resp_obj = dict(
@@ -44,6 +47,7 @@ class BlogsDetailApiView(views.APIView):
 
 
 class BlogsListView(ListAPIView):
+    schema = None
     permission_classes = [AllowAny]
     pagination_class = StandardResultsSetPagination
     queryset = Blogs.objects.select_related('added_by').all()

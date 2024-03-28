@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     "djstripe",
     'rest_framework_simplejwt',
+    'drf_yasg',
 ]
 
 SITE_ID = 1
@@ -136,7 +137,8 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
-
+LOGIN_REDIRECT_URL = "/api/v1/account/login/"
+LOGOUT_REDIRECT_URL = "/api/v1/account/logout"
 # Session
 CART_SESSION_ID = 'cart'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -298,3 +300,22 @@ try:
     from .local_settings import *
 except ImportError:
     pass
+
+
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+      'Basic': {
+            'type': 'basic'
+      },
+      'BearerToken': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+      },
+
+
+   },
+    'USE_SESSION_AUTH': False,
+
+    'PERSIST_AUTH': True
+}

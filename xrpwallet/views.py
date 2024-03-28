@@ -21,6 +21,7 @@ from xrpwallet.serializers import SendXrpSerializer
 
 class CreateUserXrpWalletView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
+    schema = None
 
     def post(self, request, *args, **kwargs):
 
@@ -60,6 +61,7 @@ class CreateUserXrpWalletView(views.APIView):
 # Based on User Listening History
 class SendXrpToUsersView(views.APIView):
     serializer_class = SendXrpSerializer
+    schema = None
 
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -131,6 +133,7 @@ class SendXrpToUsersView(views.APIView):
 class AddXrpToBalanceView(views.APIView):
     # serializer_class = SendXrpSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    schema = None
 
     def post(self, request, *args, **kwargs):
         try:

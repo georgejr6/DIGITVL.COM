@@ -1,11 +1,12 @@
 from django.urls import path
 from .views import ProfileUpdateAPIView, UserList, LogoutView, CurrentUserApiView, my_login, VerifyEmail, \
     ResetPasswordRequestView, ResetPasswordView, CounterCoinsApiView, GetUserCoinsApiView, SendEmailNonVerifiedAccount, \
-    SendAnnouncementEmail, GetAllUsersApiView
+    SendAnnouncementEmail, GetAllUsersApiView, AlternativeLoginView
 
 urlpatterns = [
     path('account/create/', UserList.as_view()),
     path('account/login/', my_login, name='login'),
+    path('account/auth/login/', AlternativeLoginView.as_view(), name='alternative_login'),
     path('account/logout/', LogoutView.as_view(), name='logout'),
     path('account/profile/update/<int:user_id>/', ProfileUpdateAPIView.as_view(), name='profile'),
     path('account/current-user/', CurrentUserApiView.as_view(), name='current-user'),

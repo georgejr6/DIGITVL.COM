@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_auto_schema
 from notifications.models import Notification
 from rest_framework import status
 from rest_framework.generics import ListAPIView, get_object_or_404
@@ -61,6 +62,7 @@ class NotificationUnreadListApiView(views.APIView):
     serializer_class = NotificationSerializer
     queryset = Notification.objects.all()
 
+    @swagger_auto_schema(operation_description="API For Getting Users Notification. \n\n")
     def get(self, request, *args, **kwargs):
         # get user object
         user = User.objects.get(pk=request.user.id)
@@ -80,6 +82,7 @@ class NotificationReadApiView(views.APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = NotificationSerializer
     queryset = Notification.objects.all()
+    schema = None
 
     def get(self, request, *args, **kwargs):
         # get user object

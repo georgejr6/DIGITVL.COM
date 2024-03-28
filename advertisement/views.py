@@ -21,11 +21,13 @@ redis_cache = redis.StrictRedis(host=settings.REDIS_HOST,
 class GetAdvertisementApiView(ListAPIView):
     queryset = Advertisement.objects.all().order_by('?')[:1]
     serializer_class = AdvertisementSerializer
+    schema = None
 
 
 class GiveRewardOnAdvertisement(views.APIView):
     permission_classes = [IsAuthenticated]
     queryset = Advertisement.objects.all()
+    schema = None
 
     def post(self, request, poster_id, *args, **kwargs):
         try:

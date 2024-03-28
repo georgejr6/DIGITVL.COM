@@ -40,6 +40,7 @@ class RedeemCoinsForFeaturedSong(views.APIView):
     permission_classes = [IsSongUserOrReadOnly]
     serializer_class = RedeemCoinsSerializer
     queryset = Songs.objects.all()
+    schema = None
 
     def post(self, request, *args, track_id, **kwargs):
 
@@ -67,6 +68,7 @@ class RedeemCoinsForFeaturedPlaylist(views.APIView):
     permission_classes = [IsPlaylistUserOrReadOnly]
     serializer_class = RedeemCoinsSerializer
     queryset = PlayList.objects.all()
+    schema = None
 
     def post(self, request, *args, slug, **kwargs):
 
@@ -97,6 +99,7 @@ class RedeemCoinsForFeaturedPlaylist(views.APIView):
 
 
 class CreatePurchaseCoinsApiView(views.APIView):
+    schema = None
     if settings.DEBUG:
         stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
     else:
@@ -140,6 +143,7 @@ class CreatePurchaseCoinsApiView(views.APIView):
 
 class GetPurchaseCoinsCheckoutSession(views.APIView):
     permission_classes = [IsAuthenticated]
+    schema = None
 
     def get(self, request, session_id, *args, **kwargs):
         try:

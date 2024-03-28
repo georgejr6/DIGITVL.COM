@@ -4,6 +4,8 @@ from django.contrib.auth import logout as django_logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status, views
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import AuthenticationFailed
@@ -33,6 +35,7 @@ class CurrentUserApiView(views.APIView):
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
 
+    @swagger_auto_schema(operation_description="Get Current User By Sending JWT Token In Header.")
     def get(self, request, *args, **kwargs):
         """
         Determine the current user by their token, and return their data
@@ -43,13 +46,20 @@ class CurrentUserApiView(views.APIView):
 
 
 class UserList(APIView):
+
     """
     Create a new user. It's called 'UserList' because normally we'd have a get
     method here too, for retrieving a list of all User objects.
     """
     permission_classes = [permissions.AllowAny]
 
-
+    @swagger_auto_schema(operation_description="Create a new user.\n\n"
+                              "This endpoint allows clients to register a new user by submitting their details. "
+                              "Upon successful creation of the user, an email verification link will be sent "
+                              "to the provided email address.\n\n"
+                              "The response includes a success message and status information.\n\n Required Field: username, phone_number, email, password. \n\n phone_number should be entered in the format of +123-456-7890",
+                         request_body=UserSerializerWithToken,
+                         responses={200: openapi.Response('Response description', UserSerializerWithToken)})
     def post(self, request, *args, **kwargs):
         current_site = get_current_site(None)
         print('post')
@@ -81,7 +91,7 @@ class UserList(APIView):
                     'email_subject': 'Verify your email'}
 
             send_email_verification_token.delay(data)
-            output = "Successfully accounts created, please check your provided email for verification."
+            output = "Successfully account created, please check your provided email for verification."
             content = {'status': True, 'message': output}
             return Response(content, status=status.HTTP_200_OK)
         content = {'status': False, 'message': serializer.errors, 'result': error_result}
@@ -185,10 +195,100 @@ class LoginView(TokenObtainPairView):
         }, status=status.HTTP_200_OK)
 
 
+
+class AlternativeLoginView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+        except AuthenticationFailed as e:
+            # Handle the authentication failed exception
+            error_message = 'Invalid email or password.'
+            return self.custom_error_response(error_message)
+
+        return self.process_response(response)
+
+    def process_response(self, response):
+        res = response.data
+        current_coins = 0
+
+        if response.status_code == 200 and 'access' in res:
+            email = self.request.data.get('email')
+            try:
+                user = User.objects.get(email=email)
+                try:
+                    current_coins = redis_cache.hget('users:{}:coins'.format(user.id), user.id)
+                except redis.ConnectionError:
+                    pass
+                if not user.is_email_verified:
+                    error_message = 'Please verify your email address. we sent you email verification on your email account.'
+                    token = Token.objects.get(user_id=user.id)
+                    request = HttpRequest()
+
+                    # Get the current site
+                    current_site = get_current_site(request)
+
+                    # Get the protocol used in the request (HTTP or HTTPS)
+                    protocol = 'https' if request.is_secure() else 'http'
+
+                    # Generate the absolute URL with the correct protocol
+                    absolute_url = f'{protocol}://{current_site.domain}/email-verify/{token}'
+
+                    email_body = 'Hey,' + user.username + ' use the link below to verify your email \n' \
+                                 + absolute_url
+                    data = {'email_body': email_body, 'to_email': user.email, 'username': user.username,
+                            'email_subject': 'Verify your email'}
+
+                    send_email_verification_token.delay(data)
+                    return self.custom_error_response(error_message)
+                elif not user.check_password(self.request.data.get('password')):
+                    error_message = 'Invalid email or password.'
+                    return self.custom_error_response(error_message)
+
+                serializer = GetFullUserSerializer(user, context={'request': self.request})
+                user_data = serializer.data
+
+                if current_coins:
+                    user_data['coins'] = int(current_coins)
+                else:
+                    user_data['coins'] = 0
+
+                result_data = {
+
+                    'access': res.get('access'),
+                    'refresh': res.get('refresh'),
+                    'user': user_data,  # User-specific information from the serializer
+                    # Include other fields from res as needed
+                }
+
+                return Response({
+                    'status': True,
+                    'message': 'Successful login.',
+                    'result': result_data
+                }, status=status.HTTP_200_OK)
+
+
+            except User.DoesNotExist:
+                error_message = 'Invalid email or password.'
+                return self.custom_error_response(error_message)
+
+
+
+    def custom_error_response(self, error_message):
+        return Response({
+            'status': False,
+            'message': error_message,
+            'result': {}
+        }, status=status.HTTP_200_OK)
+
 class VerifyEmail(views.APIView):
     serializer_class = EmailVerificationSerializer
     permission_classes = (permissions.AllowAny,)
 
+    @swagger_auto_schema(operation_description="API For Verification of the User Email \n\n",
+                         request_body=EmailVerificationSerializer,
+                         responses={200: openapi.Response('Response description', EmailVerificationSerializer)})
     def post(self, request, *args, **kwargs):
         # try:
         result = request.data
@@ -223,6 +323,15 @@ class ResetPasswordRequestView(views.APIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = ResetPasswordRequestSerializer
 
+    @swagger_auto_schema(operation_description="API For Forgot Password Request. \n\n",
+                         request_body=ResetPasswordRequestSerializer,
+                         responses={
+                             200: openapi.Response(
+                                 description="Email Sent to your provided email, Please follow the steps to add new password.",
+                                 schema=ResetPasswordRequestSerializer
+                             )
+                         }
+                         )
     def post(self, request, *args, **kwargs):
         data = request.data
         serializer = self.serializer_class(data=data)
@@ -236,8 +345,7 @@ class ResetPasswordRequestView(views.APIView):
 
                     response['full_name'] = user.get_full_name()
                     response['status'] = True
-                    response[
-                        'message'] = "Email Sent to your provided email, Please follow the steps to add new password."
+                    response['message'] = "Email Sent to your provided email, Please follow the steps to add new password."
 
                     user.reset_password()
                     status_code = status.HTTP_200_OK
@@ -252,6 +360,16 @@ class ResetPasswordRequestView(views.APIView):
 class ResetPasswordView(views.APIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = ResetPasswordSerializer
+
+    swagger_auto_schema(operation_description="API For Resetting the User Password. \n\n",
+                       request_body=ResetPasswordRequestSerializer,
+                       responses={
+                           200: openapi.Response(
+                               description="Email Sent to your provided email, Please follow the steps to add new password.",
+                               schema=ResetPasswordRequestSerializer
+                           )
+                       }
+                       )
 
     def post(self, request, *args, **kwargs):
         data = request.data
@@ -302,6 +420,7 @@ class CounterCoinsApiView(views.APIView):
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
 
+    @swagger_auto_schema(auto_schema=None)
     def post(self, request, *args, **kwargs):
         user_detail = get_object_or_404(self.queryset, id=request.user.id)
         redis_cache.hincrby('users:{}:coins'.format(user_detail.id), user_detail.id, 5)
@@ -318,7 +437,7 @@ class CounterCoinsApiView(views.APIView):
 class GetUserCoinsApiView(views.APIView):
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
-
+    @swagger_auto_schema(auto_schema=None)
     def get(self, request, *args, **kwargs):
         user_detail = get_object_or_404(self.queryset, id=request.user.id)
         coins = redis_cache.hget('users:{}:coins'.format(user_detail.id), user_detail.id)
@@ -334,6 +453,7 @@ class SendEmailNonVerifiedAccount(views.APIView):
     permission_classes = [AllowAny]
     queryset = User.objects.all()
 
+    @swagger_auto_schema(auto_schema=None)
     def post(self, *args, **kwargs):
         user_non_verified_account = User.objects.filter(is_email_verified=False)
         for user_data in user_non_verified_account:
@@ -357,6 +477,7 @@ class SendAnnouncementEmail(views.APIView):
 
     queryset = User.objects.all()
 
+    @swagger_auto_schema(auto_schema=None)
     def post(self, request, *args, **kwargs):
         # fetch user email
         serializer = self.serializer_class(data=request.data)

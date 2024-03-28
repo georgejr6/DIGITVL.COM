@@ -2,6 +2,7 @@ import json
 import redis
 import six
 from django.conf import settings
+from drf_yasg.inspectors import FieldInspector
 from rest_framework import serializers
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
@@ -45,10 +46,9 @@ class NewTagListSerializerField(TagListSerializerField):
 
 
 class BeatsUploadSerializer(TaggitSerializer, serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False)
     slug = serializers.SerializerMethodField()
     tags = NewTagListSerializerField()
-    user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     photo_main = serializers.ImageField(required=True)
     audio_file = serializers.FileField(required=True)
 
@@ -139,7 +139,6 @@ class UserPlayListSerializer(serializers.ModelSerializer):
         else:
             return None
 
-
 class CommentsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     beats = ChildSongSerializer(read_only=True)
@@ -153,9 +152,12 @@ class CommentsSerializer(serializers.ModelSerializer):
     def get_username(self, obj):
         return obj.commenter.username
 
+
     def get_profile_pic(self, obj):
         request = self.context.get("request")
         if request and obj.commenter.profile.avatar:
             return request.build_absolute_uri(obj.commenter.profile.avatar.url)
         else:
             return None
+
+        # Override get_schema_fields to hide read-only fields from schema

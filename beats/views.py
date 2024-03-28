@@ -6,17 +6,19 @@ from django.db.models import Q
 from django.contrib.postgres.search import TrigramSimilarity
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from notifications.signals import notify
-from rest_framework import status, response, filters
+from rest_framework import status, response, filters, generics
 from rest_framework import (
     views
 )
-from rest_framework.decorators import permission_classes, api_view
+from rest_framework.decorators import permission_classes, api_view, parser_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 # from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -91,9 +93,12 @@ class BeatsSearchEngine(ListAPIView):
 
 
 @permission_classes([IsAuthenticated])
+@parser_classes((MultiPartParser,))
 class SongCreate(views.APIView):
     # authentication_classes = [JSONWebTokenAuthentication, ]
-
+    @swagger_auto_schema(operation_description="API is for uploading a song. \n\n",
+                         request_body=BeatsUploadSerializer,
+                         responses={200: openapi.Response('Response description', BeatsUploadSerializer)})
     def post(self, request, format=None):
         error_result = {}
         serializer = BeatsUploadSerializer(data=request.data, context={'request': request})
@@ -168,6 +173,17 @@ class SongUpdate(RetrieveUpdateDestroyAPIView):
 class BeatsLikeView(views.APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Like And Unlike The Song",
+        manual_parameters=[
+            openapi.Parameter('beat_id', openapi.IN_PATH, description="ID of the beat to add",
+                              type=openapi.TYPE_INTEGER, required=True)
+        ],
+        responses={
+            200: openapi.Response(description="Liked/Unliked song")
+        }
+    )
+
     def post(self, request, beat_id, format=None):
         beat = get_object_or_404(Songs, id=beat_id)
 
@@ -218,20 +234,56 @@ class ChildPlaylistView(views.APIView):
         return Response(content, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# @swagger_auto_schema(
+#     operation_description="Add a beat to a playlist",
+#     manual_parameters=[
+#         openapi.Parameter('slug', openapi.IN_PATH, description="Slug of the playlist", type=openapi.TYPE_STRING, required=True),
+#         openapi.Parameter('beat_id', openapi.IN_PATH, description="ID of the beat to add", type=openapi.TYPE_INTEGER, required=True)
+#     ],
+#     responses={
+#         200: openapi.Response(description="Successfully added beat to the playlist"),
+#         400: "Bad Request",
+#         404: "Not Found"
+#     }
+# )
+# def PlayListBeatAdded(request, slug, beat_id):
+#     try:
+#         playlist = get_object_or_404(PlayList.objects.all(), slug=slug, owner=request.user)
+#         playlist.beats.add(beat_id)
+#         content = {'message': 'Successfully beat added to the playlist'}
+#
+#         return Response(content, status=status.HTTP_200_OK)
+#     except Exception as e:
+#         return views.Response({"error": "Something went wrong"}, status=status.HTTP_200_OK)
+
+
 @permission_classes([IsAuthenticated])
-def PlayListBeatAdded(request, slug, beat_id):
-    try:
-        playlist = get_object_or_404(PlayList.objects.all(), slug=slug, owner=request.user)
-        playlist.beats.add(beat_id)
-        content = {'message': 'Successfully beat added'}
+class PlayListBeatAddedView(views.APIView):
+    @swagger_auto_schema(
+        operation_description="Add a beat to a playlist",
+        manual_parameters=[
+            openapi.Parameter('slug', openapi.IN_PATH, description="Slug of the playlist", type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter('beat_id', openapi.IN_PATH, description="ID of the beat to add", type=openapi.TYPE_INTEGER, required=True)
+        ],
+        responses={
+            200: openapi.Response(description="Successfully added beat to the playlist"),
+            404: "Not Found"
+        }
+    )
+    def post(self, request, slug, beat_id):
+        try:
+            playlist = get_object_or_404(PlayList, slug=slug, owner=request.user)
+            playlist.beats.add(beat_id)
+            content = {'message': 'Successfully beat added to the playlist'}
 
-        return Response(content, status=status.HTTP_200_OK)
-    except Exception as e:
-        return views.Response({"error": "Something went wrong"}, status=status.HTTP_200_OK)
+            return Response(content, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": "Something went wrong"}, status=status.HTTP_200_OK)
 
 
-class ChildPlaylistView(views.APIView):
+class ChildPlaylistView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AddPlayListSerializer
 
@@ -262,6 +314,7 @@ class CommentApiView(views.APIView):
     permission_classes = [AllowAny]
     serializer_class = CommentsSerializer
 
+    @swagger_auto_schema(operation_description="Pass Beat ID to fetch All Comments Related To That Beat.\n\n")
     def get(self, request, beat_id, *args, **kwargs):
         comments_list = Comment.objects.select_related('beats', 'beats__user', 'commenter__profile').filter(
             beats=beat_id)
@@ -269,6 +322,11 @@ class CommentApiView(views.APIView):
         resp_obj = page.generate_response(comments_list, CommentsSerializer, request)
         return resp_obj
 
+    @swagger_auto_schema(
+        operation_description="Add comment to the beat. Required Field is: Body only.",
+        request_body=CommentsSerializer,  # Specify the serializer for the request body
+        responses={status.HTTP_200_OK: openapi.Response('Comment added successfully',
+                                                        CommentsSerializer)}) # Response serializer
     def post(self, request, beat_id):
         try:
             input_data = dict()
@@ -303,8 +361,9 @@ class BeatsDetailApiView(views.APIView):
     permission_classes = [AllowAny]
     serializer_class = SongSerializer
 
+    @swagger_auto_schema(operation_description=" Get Beats Details By passing username_slug and beat_slug. \n\n")
     def get(self, request, slug, *args, **kwargs):
-        beats_detail = get_object_or_404(Songs, slug__iexact=slug)
+        beats_detail = Songs.objects.filter(slug__iexact=slug).first()
         resp_obj = dict(
             beats_detail=self.serializer_class(beats_detail, context={"request": request}).data)
         return views.Response(resp_obj, status=status.HTTP_200_OK)
@@ -316,6 +375,7 @@ class ChillListApiView(views.APIView):
     permission_classes = [AllowAny]
     serializer_class = SongSerializer
 
+    @swagger_auto_schema(operation_description="pass tag value to fetch songs by tags. \n\n")
     def get(self, request, tags, *args, **kwargs):
         object_list = Songs.objects.all()
         tag = get_object_or_404(Tag, name=tags)
@@ -329,6 +389,7 @@ class SongPlayCounterApiView(views.APIView):
     permission_classes = [AllowAny]
     serializer_class = SongSerializer
 
+    @swagger_auto_schema(auto_schema=None)
     def post(self, request, beat_id, *args, **kwargs):
         beats_detail = get_object_or_404(Songs, id=beat_id)
         redis_cache.incr('beat:{}:plays'.format(beats_detail.id))
@@ -370,6 +431,7 @@ class BeatsUserLikesList(views.APIView):
     serializer_class = ChildFullUserSerializer
     queryset = Songs.objects.all()
 
+    @swagger_auto_schema(operation_description="API For Fetching Songs Likes. :Parameter song_slug. \n\n")
     def get(self, request, slug, *args, **kwargs):
         users_like_list = []
         current_beat = get_object_or_404(Songs, slug=slug)
@@ -401,6 +463,7 @@ class RelatedBeatsApiView(views.APIView):
     permission_classes = [AllowAny]
     serializer_class = ChildSongSerializer
     queryset = Songs.objects.select_related('user')
+    schema = None
 
     def get(self, request, slug, *args, **kwargs):
         song = get_object_or_404(Songs, slug__iexact=slug)

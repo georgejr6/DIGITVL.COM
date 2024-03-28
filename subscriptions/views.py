@@ -61,6 +61,7 @@ def get_user_subscription(request):
 # view for creating subscriptions of the user
 
 class CreateSubscriptionApiView(views.APIView):
+    schema = None
     if settings.DEBUG:
         stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
     else:
@@ -107,6 +108,7 @@ class CreateSubscriptionApiView(views.APIView):
 class GetCheckoutSession(views.APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = GetFullUserSerializer
+    schema = None
 
     def get(self, request, session_id, *args, **kwargs):
         try:
@@ -159,6 +161,7 @@ class GetCheckoutSessionData(views.APIView):
     # permission_classes = [IsAuthenticated]
     serializer_class = GetFullUserSerializer
     queryset = User.objects.all()
+    schema = None
 
     def get(self, request, username, *args, **kwargs):
         try:
@@ -176,6 +179,7 @@ class GetCheckoutSessionData(views.APIView):
 
 class CreateCustomerPortalApiView(views.APIView):
     permission_classes = [IsAuthenticated]
+    schema = None
 
     # Authenticate your user.
     def post(self, request, *args, **kwargs):
