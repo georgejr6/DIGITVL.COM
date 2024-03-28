@@ -1,11 +1,15 @@
+
+
 import stripe
+from django.conf import settings
 
 # Create your views here.
 from rest_framework import status, views, permissions
 
 from donations.serializers import DonationSerializer
 
-stripe.api_key = 'sk_test_cHrJPPzuL6WtbDLZVXgPfOGJ00FFjjFiLi'
+
+stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
 
 
 # from .serializers import DonationsSerializer
